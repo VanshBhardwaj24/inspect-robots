@@ -31,7 +31,8 @@ def _numpy_scalar_to_python(value: object) -> object:
     # By kind, as json_log._sanitize does: .item() would turn ns datetimes into bare ints.
     if isinstance(value, np.bool_):
         return bool(value)
-    if isinstance(value, np.integer):
+    # Kind "i"/"u" only: timedelta64 subclasses np.integer but int() would drop its unit.
+    if isinstance(value, np.integer) and value.dtype.kind in "iu":
         return int(value)
     if isinstance(value, np.floating):
         return float(value)

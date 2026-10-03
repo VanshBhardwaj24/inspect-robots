@@ -140,6 +140,11 @@ def test_json_safe_scene_metadata_drops_numpy_scalars_that_are_not_plain_numbers
         "phase": np.complex128(1 + 2j),
         "stamp": np.datetime64("2026-01-01"),
         "stamp_ns": np.datetime64("2026-01-01T00:00:00.000000000"),
+        # timedelta64 subclasses np.integer; equal durations must be treated alike
+        # whatever their precision, and never kept as a unit-less int.
+        "elapsed_us": np.timedelta64(1000, "us"),
+        "elapsed_ns": np.timedelta64(1000, "ns"),
+        "nested": {"elapsed_ns": np.timedelta64(5, "ns"), "ids": [np.timedelta64(5, "us")]},
         "count": np.int64(3),
     }
 
