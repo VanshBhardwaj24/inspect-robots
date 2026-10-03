@@ -28,17 +28,18 @@ import numpy as np
 
 
 def _numpy_scalar_to_python(value: object) -> object:
-    # json.dumps only calls this for values it cannot encode itself.
-    if isinstance(value, np.generic):
-        item = value.item()
-        # longdouble.item() returns a longdouble again; handing it back would recurse forever.
-        if not isinstance(item, np.generic):
-            return item
+    # By kind, as json_log._sanitize does: .item() would turn ns datetimes into bare ints.
+    if isinstance(value, np.bool_):
+        return bool(value)
+    if isinstance(value, np.integer):
+        return int(value)
+    if isinstance(value, np.floating):
+        return float(value)
     raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
 
 
 def _json_safe_scene_metadata(metadata: Mapping[str, Any]) -> dict[str, Any]:
-    """Deep-copy each JSON-encodable value (NumPy scalars as Python ones); omit the rest."""
+    """Deep-copy each JSON-encodable value (NumPy numbers as Python ones); omit the rest."""
     safe: dict[str, Any] = {}
     for key, value in metadata.items():
         try:

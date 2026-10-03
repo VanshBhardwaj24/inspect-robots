@@ -112,25 +112,34 @@ def test_json_safe_scene_metadata_keeps_numpy_scalars() -> None:
         "count": np.int64(3),
         "flag": np.bool_(True),
         "ratio": np.float32(0.5),
+        "precise": np.longdouble(1.5),
         "nested": {"ids": [np.int64(1), np.int64(2)]},
         "adapter_object": object(),
     }
 
     safe = _json_safe_scene_metadata(metadata)
 
-    assert safe == {"count": 3, "flag": True, "ratio": 0.5, "nested": {"ids": [1, 2]}}
+    assert safe == {
+        "count": 3,
+        "flag": True,
+        "ratio": 0.5,
+        "precise": 1.5,
+        "nested": {"ids": [1, 2]},
+    }
     assert type(safe["count"]) is int
     assert type(safe["flag"]) is bool
     assert type(safe["ratio"]) is float
+    assert type(safe["precise"]) is float
 
 
-def test_json_safe_scene_metadata_drops_numpy_scalars_without_python_equivalent() -> None:
-    # longdouble.item() returns a longdouble, and complex/datetime64 convert to
-    # types JSON rejects: all must be dropped like any other value, never crash.
+def test_json_safe_scene_metadata_drops_numpy_scalars_that_are_not_plain_numbers() -> None:
+    # Only bool/integer/floating scalars convert; the rest are dropped like any
+    # unencodable value. In particular .item() would keep an ns-precision
+    # datetime64 as a meaningless bare int.
     metadata = {
-        "precise": np.longdouble(1.5),
         "phase": np.complex128(1 + 2j),
         "stamp": np.datetime64("2026-01-01"),
+        "stamp_ns": np.datetime64("2026-01-01T00:00:00.000000000"),
         "count": np.int64(3),
     }
 
