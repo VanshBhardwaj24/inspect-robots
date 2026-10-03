@@ -24,13 +24,22 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, ClassVar
 
+import numpy as np
+
+
+def _numpy_scalar_to_python(value: object) -> object:
+    # json.dumps only calls this for values it cannot encode itself.
+    if isinstance(value, np.generic):
+        return value.item()
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
 
 def _json_safe_scene_metadata(metadata: Mapping[str, Any]) -> dict[str, Any]:
-    """Deep-copy each JSON-encodable value and omit values encoding rejects."""
+    """Deep-copy each JSON-encodable value (NumPy scalars as Python ones); omit the rest."""
     safe: dict[str, Any] = {}
     for key, value in metadata.items():
         try:
-            safe[key] = json.loads(json.dumps(value))
+            safe[key] = json.loads(json.dumps(value, default=_numpy_scalar_to_python))
         except (TypeError, ValueError, OverflowError):
             continue
     return safe
