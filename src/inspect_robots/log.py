@@ -30,7 +30,10 @@ import numpy as np
 def _numpy_scalar_to_python(value: object) -> object:
     # json.dumps only calls this for values it cannot encode itself.
     if isinstance(value, np.generic):
-        return value.item()
+        item = value.item()
+        # longdouble.item() returns a longdouble again; handing it back would recurse forever.
+        if not isinstance(item, np.generic):
+            return item
     raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
 
 

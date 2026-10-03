@@ -124,6 +124,19 @@ def test_json_safe_scene_metadata_keeps_numpy_scalars() -> None:
     assert type(safe["ratio"]) is float
 
 
+def test_json_safe_scene_metadata_drops_numpy_scalars_without_python_equivalent() -> None:
+    # longdouble.item() returns a longdouble, and complex/datetime64 convert to
+    # types JSON rejects: all must be dropped like any other value, never crash.
+    metadata = {
+        "precise": np.longdouble(1.5),
+        "phase": np.complex128(1 + 2j),
+        "stamp": np.datetime64("2026-01-01"),
+        "count": np.int64(3),
+    }
+
+    assert _json_safe_scene_metadata(metadata) == {"count": 3}
+
+
 def test_eval_log_round_trips_through_dict() -> None:
     log = _golden_log()
     restored = EvalLog.from_dict(log.to_dict())
